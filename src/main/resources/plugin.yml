@@ -1,0 +1,30 @@
+name: iStaff
+author: Zwander.xd@gmail.com
+main: com.connorl.istaff.IStaff
+version: 1.1
+softdepend: [Essentials]
+commands:
+  h:
+    permission: istaff.true
+    description: Toggle hacker detection mode
+    usage: Use /h to toggle hacker detection mode. /h forceclear will delete your saved inventory
+  report:
+    description: Command used to report a hacker
+    usage: /report <username> <message>
+  check:
+    permission: istaff.admin
+    description: Command used to check another player's report counts
+    usage: /check <username>
+permissions:
+  istaff.true:
+    default: false
+    description: Permission to allow use of the iStaff plugin
+  istaff.delay:
+    default: false
+    description: Whether or not to delay the setting of admin mode
+  istaff.editinv:
+    default: false
+    description: Whether or not a player can edit inventories using the view inventory wand
+  istaff.admin:
+    default: false
+    description: Whether or not a player can check another player's report counts
