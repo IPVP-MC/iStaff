@@ -11,12 +11,14 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.scheduler.BukkitRunnable;
 
 public class HackerModeListener implements Listener {
 
     public static void set(Player player) {
+        player.setFoodLevel(20);
         new BukkitRunnable() {
             @Override
             public void run() {
@@ -57,7 +59,18 @@ public class HackerModeListener implements Listener {
         Entity entity = event.getEntity();
         if (entity instanceof Player) {
             PlayerHackerMode hackerMode = ISDataBaseManager.getHackerMode((Player) entity);
-            if (hackerMode != null && hackerMode.hackerMode) {
+            if (hackerMode != null && hackerMode.isHackerMode()) {
+                event.setCancelled(true);
+            }
+        }
+    }
+
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.NORMAL)
+    public void onFoodLevelChange(FoodLevelChangeEvent event) {
+        Entity entity = event.getEntity();
+        if (entity instanceof Player) {
+            PlayerHackerMode hackerMode = ISDataBaseManager.getHackerMode((Player) entity);
+            if (hackerMode != null && hackerMode.isHackerMode()) {
                 event.setCancelled(true);
             }
         }
