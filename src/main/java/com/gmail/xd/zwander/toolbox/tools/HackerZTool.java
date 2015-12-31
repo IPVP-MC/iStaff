@@ -24,7 +24,6 @@ public class HackerZTool extends BasicZTool {
     static {
         ItemMeta meta = hackerItem.getItemMeta();
         meta.setDisplayName(ChatColor.YELLOW + "Staff Mode: " + ChatColor.GREEN + "Enabled");
-        meta.setLore(Collections.singletonList(ChatColor.BLACK + "" + ChatColor.MAGIC + "t18cydur"));
         hackerItem.setItemMeta(meta);
     }
 
