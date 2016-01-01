@@ -48,7 +48,7 @@ public class HackerModeListener implements Listener {
     public void onPlayerDropItem(PlayerDropItemEvent event) {
         Player player = event.getPlayer();
         PlayerHackerMode hackerMode = ISDataBaseManager.getHackerMode(player);
-        if (hackerMode != null && hackerMode.hackerMode) {
+        if (hackerMode != null && hackerMode.isHackerMode()) {
             event.setCancelled(true);
             player.sendMessage(ChatColor.RED + "You cannot drop items whilst in staff mode.");
         }

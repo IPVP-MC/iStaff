@@ -17,7 +17,6 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerPickupItemEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.AbstractMap;
@@ -31,7 +30,10 @@ public class ConnectionHandler implements Listener {
 
     public static Map<UUID, Entry<Long, TeleportRequest>> teleportRequests = new HashMap<>();
 
-    public ConnectionHandler(Plugin plugin) {
+    private final IStaff plugin;
+
+    public ConnectionHandler(IStaff plugin) {
+        this.plugin = plugin;
         plugin.getServer().getScheduler().scheduleSyncRepeatingTask(plugin, new Runnable() {
             @Override
             public void run() {
@@ -54,11 +56,11 @@ public class ConnectionHandler implements Listener {
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
-        if (BungeeMessager.getServerName() == null) {
+        if (plugin.getBungeeMessager().getServerName() == null) {
             Bukkit.getScheduler().runTaskLater(IStaff.getPlugin(), new Runnable() {
                 @Override
                 public void run() {
-                    BungeeMessager.sendPluginMessage("GetServer", null);
+                    plugin.getBungeeMessager().sendPluginMessage("GetServer", null);
                 }
             }, 30L);
         }
@@ -101,7 +103,7 @@ public class ConnectionHandler implements Listener {
         } else {
             for (Player target : Bukkit.getOnlinePlayers()) {
                 PlayerHackerMode hackerMode = ISDataBaseManager.getHackerMode(target);
-                if (hackerMode != null && hackerMode.hackerMode) {
+                if (hackerMode != null && hackerMode.isHackerMode()) {
                     player.hidePlayer(target);
                 }
             }

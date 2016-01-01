@@ -17,7 +17,6 @@ import lombok.Getter;
 import org.bukkit.configuration.Configuration;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.scheduler.BukkitRunnable;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
 
@@ -29,6 +28,9 @@ import java.util.Map;
 import java.util.logging.Level;
 
 public class IStaff extends JavaPlugin {
+
+    @Getter
+    private BungeeMessager bungeeMessager;
 
     private MongoClient mongoClient;
 
@@ -44,9 +46,10 @@ public class IStaff extends JavaPlugin {
     @Override
     public void onEnable() {
         plugin = this;
-
         setupConfig();
+
         Menu.initialize(this);
+        setupMenus();
 
         getCommand("h").setExecutor(new HackerCommand(this));
         getCommand("report").setExecutor(new ReportCommand(this));
@@ -58,46 +61,58 @@ public class IStaff extends JavaPlugin {
         new ZToolBox(this); // Create and register ZToolBox
 
         // Database stuff
-        getMongoClient();
-
-        DB mongoDatabase = mongoClient.getDB(configFile.getString("mongo.name"));
-        getServer().getLogger().log(Level.INFO, "Database: " + mongoDatabase.getName());
-        if (getServer().getOnlinePlayers().size() > 0) {
-            BungeeMessager.sendPluginMessage("GetServer", null);
-            getServer().getScheduler().runTaskLater(this, new Runnable() {
-                @Override
-                public void run() {
-                    for (Player player : getServer().getOnlinePlayers()) {
-                        HackerCommand.updatePlayerHackerMode(player, false);
-                    }
-                }
-            }, 10L);
-        }
-
-        ISDataBaseManager.mdb = mongoDatabase;
-        setupMenus();
-
         final JavaPlugin plugin = this;
-        final BungeeMessager messager = new BungeeMessager(this);
+        bungeeMessager = new BungeeMessager(this);
         getServer().getScheduler().runTaskAsynchronously(this, new Runnable() {
             @Override
             public void run() {
-                String ip = configFile.getString("redis.host");
-                int port = configFile.getInt("redis.port");
-                String password = configFile.getString("redis.password");
-                if (password == null || password.isEmpty()) {
-                    pool = new JedisPool(new JedisPoolConfig(), ip, port, 0);
-                } else {
-                    pool = new JedisPool(new JedisPoolConfig(), ip, port, 0, password);
+                // Try setting up Mongo.
+                String mongoName = configFile.getString("mongo.name");
+                String mongoIP = configFile.getString("mongo.host");
+                int mongoPort = configFile.getInt("mongo.port");
+                try {
+                    getServer().getLogger().info("Attempting to connect to mongo database");
+                    mongoClient = new MongoClient(mongoIP, mongoPort);
+                    mongoClient.getDatabaseNames();
+                    DB mongoDatabase = mongoClient.getDB(mongoName);
+                    getServer().getLogger().log(Level.INFO, "Database: " + mongoDatabase.getName());
+                    if (getServer().getOnlinePlayers().size() > 0) {
+                        bungeeMessager.sendPluginMessage("GetServer", null);
+                        getServer().getScheduler().runTaskLater(plugin, new Runnable() {
+                            @Override
+                            public void run() {
+                                for (Player player : getServer().getOnlinePlayers()) {
+                                    HackerCommand.updatePlayerHackerMode(player, false);
+                                }
+                            }
+                        }, 10L);
+                    }
+
+                    ISDataBaseManager.mdb = mongoDatabase;
+                    getServer().getLogger().info("Successfully connected to mongo database");
+                } catch (MongoException ex) {
+                    getServer().getLogger().log(Level.SEVERE, "Could not connect to mongo database", ex);
+                } catch (UnknownHostException ex) {
+                    ex.printStackTrace();
                 }
 
-                // Subscribe on server thread.
-                new BukkitRunnable() {
-                    @Override
-                    public void run() {
-                        messager.subscribeInit();
-                    }
-                }.runTask(plugin);
+                // Connect to redis now.
+                String redisIP = configFile.getString("redis.host");
+                int redisPort = configFile.getInt("redis.port");
+                String redisPassword = configFile.getString("redis.password");
+                if (redisPassword == null || redisPassword.isEmpty()) {
+                    pool = new JedisPool(new JedisPoolConfig(), redisIP, redisPort, 0);
+                } else {
+                    pool = new JedisPool(new JedisPoolConfig(), redisIP, redisPort, 0, redisPassword);
+                }
+                try {
+                    getServer().getLogger().info("Attempting to connect to Redis");
+                    pool.getResource();
+                    bungeeMessager.subscribeInit();
+                    getServer().getLogger().info("Successfully connected to Redis");
+                } catch (Exception ex) {
+                    getServer().getLogger().log(Level.SEVERE, "Could not connect to Redis", ex);
+                }
             }
         });
     }
@@ -108,7 +123,7 @@ public class IStaff extends JavaPlugin {
             mongoClient.close();
         }
 
-        BungeeMessager.close();
+        bungeeMessager.close();
         if (pool != null) {
             pool.close();
         }
@@ -129,29 +144,17 @@ public class IStaff extends JavaPlugin {
         configFile.addDefault("mongo.port", 27017);
         configFile.addDefault("mongo.name", "iStaff");
         configFile.addDefault("reports.lifespan", 6379);
-        lifespan = configFile.getInt("reports.lifespan");
+        reportLifespan = configFile.getInt("reports.lifespan");
         this.saveDefaultConfig();
         this.saveConfig();
     }
 
     public MongoClient getMongoClient() {
-        String ip = configFile.getString("mongo.host");
-        int port = configFile.getInt("mongo.port");
-
-        try {
-            mongoClient = new MongoClient(ip, port);
-            mongoClient.getDatabaseNames();
-        } catch (MongoException ex) {
-            getServer().getLogger().log(Level.SEVERE, "Could not connect to mongo database", ex);
-        } catch (UnknownHostException ex) {
-            ex.printStackTrace();
-        }
-
         return mongoClient;
     }
 
     private void setupMenus() {
-        MenuPage reports = new DisplayReportsMenu(true);
+        MenuPage reports = new DisplayReportsMenu(this, true);
         MenuServer.urlMenupages.put("reports", reports);
     }
 
@@ -170,9 +173,6 @@ public class IStaff extends JavaPlugin {
         return queryPairs;
     }
 
-    private int lifespan = 0;
-
-    public int getReportLifespan() {
-        return lifespan;
-    }
+    @Getter
+    private int reportLifespan = 0;
 }

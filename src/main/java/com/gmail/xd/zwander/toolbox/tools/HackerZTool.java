@@ -15,8 +15,6 @@ import org.bukkit.event.player.PlayerPickupItemEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
-import java.util.Collections;
-
 public class HackerZTool extends BasicZTool {
 
     private static ItemStack hackerItem = new ItemStack(Material.EYE_OF_ENDER, 1);

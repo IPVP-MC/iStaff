@@ -5,6 +5,8 @@ package com.gmail.xd.zwander.menu;
  * http://bukkit.org/members/567legodude.90909839/
  */
 
+import lombok.Getter;
+import lombok.Setter;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.HumanEntity;
@@ -31,22 +33,31 @@ public class Menu {
 
     public interface ItemAction {
 
-        void run(Player player, Inventory inv, ItemStack item, int slot, InventoryAction action, InventoryClickEvent e);
+        void run(Player player, Inventory inv, ItemStack item, int slot, InventoryAction action, InventoryClickEvent event);
     }
 
     public interface CloseAction {
 
-        boolean run(HumanEntity humanEntity, Inventory inv);
+        boolean run(HumanEntity humanEntity, Inventory inventory);
     }
 
+    @Getter
+    @Setter
     private String title = "";
+
+    @Getter
     private int rows = 3;
+
     private Map<Integer, ItemStack> content = new HashMap<>();
     private Map<Integer, ItemAction> commands = new HashMap<>();
     private Inventory inventory;
     private ItemAction itemAction;
+
+    @Getter
+    @Setter
     private CloseAction closeAction;
-    private boolean runempty = true;
+
+    private boolean runEmpty = true;
 
     public static List<Menu> menus = new ArrayList<>();
 
@@ -91,49 +102,38 @@ public class Menu {
     }
 
     private boolean onInventoryClose(InventoryCloseEvent event) {
-        Inventory inv = event.getInventory();
+        Inventory inventory = event.getInventory();
         HumanEntity player = event.getPlayer();
-        if (inv.getName().equals(title) && inv.equals(inventory)) {
-            if (closeAction != null) {
-                return closeAction.run(player, inv);
-            }
-        }
-
-        return false;
+        return inventory.getName().equals(title) && inventory.equals(this.inventory) && closeAction != null && closeAction.run(player, inventory);
     }
 
     private void onInventoryClick(InventoryClickEvent event) {
-        Player player = (Player) event.getWhoClicked();
-        Inventory inventory = event.getInventory();
-        ItemStack item = event.getCurrentItem();
-        int slot = event.getRawSlot();
-        InventoryAction action = event.getAction();
+        HumanEntity humanEntity = event.getWhoClicked();
+        if (humanEntity instanceof Player) {
+            Player player = (Player) humanEntity;
+            Inventory inventory = event.getInventory();
+            ItemStack item = event.getCurrentItem();
+            int slot = event.getRawSlot();
+            InventoryAction action = event.getAction();
 
-        if (item == null || item.getType() == Material.AIR) {
-            if (!runempty) {
-                return;
-            }
-        }
-
-        if (inventory.getName().equals(title) && inventory.equals(this.inventory)) {
-            if (slot <= (rows * 9) - 1) {
-                if (hasAction(slot)) {
-                    commands.get(slot).run(player, inventory, item, slot, action, event);
-                }
-
-                if (itemAction != null) {
-                    itemAction.run(player, inventory, item, slot, action, event);
+            if (item == null || item.getType() == Material.AIR) {
+                if (!runEmpty) {
+                    return;
                 }
             }
+
+            if (inventory.getName().equals(title) && inventory.equals(this.inventory)) {
+                if (slot <= (rows * 9) - 1) {
+                    if (hasAction(slot)) {
+                        commands.get(slot).run(player, inventory, item, slot, action, event);
+                    }
+
+                    if (itemAction != null) {
+                        itemAction.run(player, inventory, item, slot, action, event);
+                    }
+                }
+            }
         }
-    }
-
-    public CloseAction getCloseAction() {
-        return closeAction;
-    }
-
-    public void setCloseAction(CloseAction closeAction) {
-        this.closeAction = closeAction;
     }
 
     @Deprecated
@@ -156,13 +156,11 @@ public class Menu {
 
     @Deprecated
     public void removeAction(int slot) {
-        if (commands.containsKey(slot)) {
-            commands.remove(slot);
-        }
+        commands.remove(slot);
     }
 
     public void runWhenEmpty(boolean state) {
-        this.runempty = state;
+        this.runEmpty = state;
     }
 
     public int nextOpenSlot() {
@@ -222,20 +220,20 @@ public class Menu {
         }
     }
 
-    public void fillRange(int s, int e, ItemStack item) throws IndexOutOfBoundsException {
-        if (e <= s) {
+    public void fillRange(int start, int end, ItemStack item) throws IndexOutOfBoundsException {
+        if (end <= start) {
             throw new IndexOutOfBoundsException("fillRange() : Ending index must be less than starting index.");
         }
 
-        if (s < 0 || s > (rows * 9) - 1) {
+        if (start < 0 || start > (rows * 9) - 1) {
             throw new IndexOutOfBoundsException("fillRange() : Starting index is outside inventory.");
         }
 
-        if (e < 0 || e > (rows * 9) - 1) {
+        if (end < 0 || end > (rows * 9) - 1) {
             throw new IndexOutOfBoundsException("fillRange() : Ending index is outside inventory.");
         }
 
-        for (int i = s; i <= e; i++) {
+        for (int i = start; i <= end; i++) {
             content.put(i, item);
         }
     }
@@ -245,19 +243,7 @@ public class Menu {
     }
 
     public ItemStack getItem(int slot) {
-        return content.containsKey(slot) ? content.get(slot) : null;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-    public String getTitle() {
-        return this.title;
-    }
-
-    public int rows() {
-        return this.rows;
+        return content.get(slot);
     }
 
     public void build() {

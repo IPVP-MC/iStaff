@@ -16,7 +16,7 @@ public class FauxPlayerInventory {
     }
 
     public FauxPlayerInventory(PlayerInventory inventory) {
-        Inventory reportInventory = Bukkit.createInventory(null, 4 * 9, inventory.getTitle());
+        Inventory reportInventory = Bukkit.createInventory(null, 36, inventory.getTitle());
         reportInventory.setContents(inventory.getContents());
 
         this.inventory = reportInventory;

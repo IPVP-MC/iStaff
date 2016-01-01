@@ -35,7 +35,10 @@ public class DisplayReportsMenu implements MenuPage {
     int pageNumber;
     boolean forceUpdate;
 
-    public DisplayReportsMenu(boolean forceUpdate) {
+    private final IStaff plugin;
+
+    public DisplayReportsMenu(IStaff plugin, boolean forceUpdate) {
+        this.plugin = plugin;
         this.forceUpdate = forceUpdate;
     }
 
@@ -82,7 +85,7 @@ public class DisplayReportsMenu implements MenuPage {
                     Menu menu = new Menu("Reports", 6);
                     menu.setCloseAction(new Menu.CloseAction() {
                         @Override
-                        public boolean run(HumanEntity humanEntity, Inventory inv) {
+                        public boolean run(HumanEntity humanEntity, Inventory inventory) {
                             ISDataBaseManager.setURL(player, "");
                             return true;
                         }
@@ -120,10 +123,10 @@ public class DisplayReportsMenu implements MenuPage {
                                 long time = new Date().getTime() - date.getTime();
                                 String reason = lastReportData.reason;
                                 String[] lore = {
-                                        ChatColor.GOLD + "Reported by: " + ChatColor.RED + firstReportData.reporter,
+                                        ChatColor.GOLD + "Reported by: " + ChatColor.RED + firstReportData.reporterName,
                                         ChatColor.GOLD + "Duration: " + ChatColor.RED + getTimeString(time),
                                         ChatColor.GOLD + "Reported for: " + ChatColor.RED + reason,
-                                        ChatColor.GOLD + "Server: " + ChatColor.RED + lastReportData.server
+                                        ChatColor.GOLD + "Server: " + ChatColor.RED + lastReportData.serverName
                                 };
 
                                 meta.setLore(Arrays.asList(lore));
@@ -138,13 +141,13 @@ public class DisplayReportsMenu implements MenuPage {
                                         event.setCancelled(true);
                                         ISDataBaseManager.resolveAllReports(entry.getKey());
                                         for (ReportData data : dataList) {
-                                            BungeeMessager.sendMessage(player, data.reporter, ChatColor.DARK_AQUA + player.getName()
+                                            plugin.getBungeeMessager().sendMessage(player, data.reporterName, ChatColor.DARK_AQUA + player.getName()
                                                     + " is handling your report on " + entry.getKey() + ".");
                                         }
 
-                                        BungeeMessager.sendAdminMessage(ChatColor.AQUA + player.getName() + " is handling " + lastReportData.reporter + "'s report on " + entry.getKey() + ".");
+                                        BungeeMessager.sendAdminMessage(ChatColor.AQUA + player.getName() + " is handling " + lastReportData.reporterName + "'s report on " + entry.getKey() + ".");
                                         ISDataBaseManager.addResolvedReportTally(player);
-                                        BungeeMessager.sendTeleReq(player, Iterables.getLast(dataList).server, new TeleportRequest(entry.getKey(), reason));
+                                        plugin.getBungeeMessager().sendTeleReq(player, Iterables.getLast(dataList).serverName, new TeleportRequest(null, null, entry.getKey(), reason));
                                     }
                                 });
                             }
@@ -187,7 +190,7 @@ public class DisplayReportsMenu implements MenuPage {
                     menu.build();
                     menu.showMenu(player);
                 }
-            }.runTaskAsynchronously(IStaff.getPlugin());
+            }.runTaskAsynchronously(plugin);
         } catch (UnsupportedEncodingException ex) {
             ex.printStackTrace();
         }

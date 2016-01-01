@@ -28,60 +28,53 @@ import java.util.logging.Level;
  */
 public class BungeeMessager extends JedisPubSub implements PluginMessageListener {
 
-    static IStaff plugin;
-    static String[] serverList;
-    static BungeeMessager instance;
+    private String[] serverList;
 
     @Getter
-    private static String serverName;
+    private String serverName;
 
     @Getter
-    private static boolean updateInProgress;
+    private boolean updateInProgress;
 
     @Getter
-    private static Map<String, PlayerConnectionData> playerList = new HashMap<>();
+    private Map<String, PlayerConnectionData> playerList = new HashMap<>();
 
-    private static int uuidCounter = 0;
+    private int uuidCounter = 0;
+    private BukkitTask subscription;
+    private final IStaff plugin;
 
     public BungeeMessager(IStaff plugin) {
-        BungeeMessager.plugin = plugin;
+        this.plugin = plugin;
         plugin.getServer().getMessenger().registerOutgoingPluginChannel(plugin, "RedisBungee");
         plugin.getServer().getMessenger().registerIncomingPluginChannel(plugin, "RedisBungee", this);
         plugin.getServer().getMessenger().registerOutgoingPluginChannel(plugin, "BungeeCord");
         plugin.getServer().getMessenger().registerIncomingPluginChannel(plugin, "BungeeCord", this);
-        instance = this;
     }
-
-    private static BukkitTask subscription;
 
     public void subscribeInit() {
-        subscription = new BukkitRunnable() {
-            @Override
-            public void run() {
-                Jedis jedis = plugin.getPool().getResource();
-                try {
-                    Bukkit.getLogger().info("Subscribing to \"iStaff\"...");
-                    jedis.subscribe(instance, "istaff");
-                    Bukkit.getLogger().info("iStaff subscription ended.");
-                    plugin.getPool().returnResource(jedis);
-                    subscription = null;
-                    subscribe();
-                } catch (Exception ex) {
-                    plugin.getPool().returnResource(jedis);
-                    Bukkit.getLogger().log(Level.SEVERE, "Subscribing failed. Please restart the server.", ex);
-                    subscription = null;
-                    subscribe();
-                }
-            }
-        }.runTaskAsynchronously(plugin);
+        Jedis jedis = plugin.getPool().getResource();
+        try {
+            Bukkit.getLogger().info("Subscribing to \"iStaff\"...");
+            jedis.subscribe(this, "istaff");
+            Bukkit.getLogger().info("iStaff subscription ended.");
+            plugin.getPool().returnResource(jedis);
+            subscription = null;
+            subscribe();
+        } catch (Exception ex) {
+            plugin.getPool().returnResource(jedis);
+            Bukkit.getLogger().log(Level.SEVERE, "Subscribing failed. Please restart the server.", ex);
+            subscription = null;
+            subscribe();
+        }
     }
 
-    public static void close() {
-        instance.unsubscribe();
+    public void close() {
+        unsubscribe();
         subscription.cancel();
     }
 
     private static void sendChannelMessage(String channel, String message) {
+        IStaff plugin = IStaff.getPlugin();
         plugin.getLogger().info("---Channel Message Start---");
         Jedis jedis = plugin.getPool().getResource();
         plugin.getLogger().info("Resource located");
@@ -182,7 +175,7 @@ public class BungeeMessager extends JedisPubSub implements PluginMessageListener
         }
     }
 
-    public static void sendPluginMessage(String subChannel, String argument) {
+    public void sendPluginMessage(String subChannel, String argument) {
         ByteArrayDataOutput out = ByteStreams.newDataOutput();
         out.writeUTF(subChannel);
         if (argument != null) {
@@ -197,7 +190,7 @@ public class BungeeMessager extends JedisPubSub implements PluginMessageListener
 
     public void telePlayer(final Player player, String serverName) {
         plugin.getLogger().info("Attempting to teleport..");
-        if (serverName.equals(BungeeMessager.serverName)) {
+        if (serverName.equals(this.serverName)) {
             Bukkit.getScheduler().runTaskLater(plugin, new Runnable() {
                 @Override
                 public void run() {
@@ -218,7 +211,7 @@ public class BungeeMessager extends JedisPubSub implements PluginMessageListener
     /**
      * DO NOT CALL FROM MAIN THREAD
      */
-    public static void updatePlayerList() {
+    public void updatePlayerList() {
         if (!updateInProgress) {
             updateInProgress = true;
             ByteArrayDataOutput out = ByteStreams.newDataOutput();
@@ -237,13 +230,13 @@ public class BungeeMessager extends JedisPubSub implements PluginMessageListener
         }
     }
 
-    public static void sendTeleReq(Player player, String server, TeleportRequest teleportRequest) {
+    public void sendTeleReq(Player player, String server, TeleportRequest teleportRequest) {
         sendTeleReq(player, server, teleportRequest.serialize());
     }
 
-    public static void sendTeleReq(Player player, String serverName, String serialisedTeleportRequest) {
+    public void sendTeleReq(Player player, String serverName, String serialisedTeleportRequest) {
         plugin.getLogger().info("Sending teleport request");
-        String message = serverName + DELIMITER + player.getUniqueId().toString() + DELIMITER + serialisedTeleportRequest + DELIMITER + BungeeMessager.serverName;
+        String message = serverName + DELIMITER + player.getUniqueId().toString() + DELIMITER + serialisedTeleportRequest + DELIMITER + this.serverName;
         new MessageSender("TeleRequest", message).start();
     }
 
@@ -257,7 +250,7 @@ public class BungeeMessager extends JedisPubSub implements PluginMessageListener
         new MessageSender("AdminMessage", message).start();
     }
 
-    public static void sendMessage(Player from, String playerName, String message) {
+    public void sendMessage(Player from, String playerName, String message) {
         ByteArrayDataOutput out = ByteStreams.newDataOutput();
         out.writeUTF("Message");
         out.writeUTF(playerName);
@@ -265,13 +258,13 @@ public class BungeeMessager extends JedisPubSub implements PluginMessageListener
         from.sendPluginMessage(plugin, "BungeeCord", out.toByteArray());
     }
 
-    private static void sendTeleportRequestResponse(UUID id, String server, boolean success) {
+    private void sendTeleportRequestResponse(UUID id, String server, boolean success) {
         String message = server + DELIMITER + success + DELIMITER + id.toString() + DELIMITER + serverName;
         plugin.getLogger().info("Teleport response is being sent.");
         new MessageSender("TeleResponse", message).start();
     }
 
-    private static void updatePlayerListDirect() {
+    private void updatePlayerListDirect() {
         for (String server : serverList) {
             ByteArrayDataOutput out = ByteStreams.newDataOutput();
             out.writeUTF("PlayerList");
@@ -301,7 +294,7 @@ public class BungeeMessager extends JedisPubSub implements PluginMessageListener
 
                 String[] playerList = input.readUTF().split(", ");
                 for (String playerName : playerList) {
-                    BungeeMessager.playerList.put(playerName, new PlayerConnectionData(playerName, server, null));
+                    this.playerList.put(playerName, new PlayerConnectionData(playerName, server, null));
                     sendPluginMessage("UUIDOther", playerName);
                 }
 
@@ -321,8 +314,8 @@ public class BungeeMessager extends JedisPubSub implements PluginMessageListener
                 sb.insert(18, '-');
                 sb.insert(23, '-');
 
-                BungeeMessager.playerList.get(playerName).uuid = UUID.fromString(sb.toString());
-                if (uuidCounter == BungeeMessager.playerList.size()) {
+                this.playerList.get(playerName).uuid = UUID.fromString(sb.toString());
+                if (uuidCounter == this.playerList.size()) {
                     updateInProgress = false;
                     uuidCounter = 0;
                 }
@@ -348,7 +341,7 @@ public class BungeeMessager extends JedisPubSub implements PluginMessageListener
         @Override
         public void run() {
             sendChannelMessage(channel, message);
-            plugin.getLogger().info("Message has been sent: " + channel + " : " + message);
+            IStaff.getPlugin().getLogger().info("Message has been sent: " + channel + " : " + message);
         }
     }
 }

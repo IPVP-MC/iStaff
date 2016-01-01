@@ -1,7 +1,5 @@
 package com.connorl.istaff;
 
-import com.connorl.istaff.listeners.BungeeMessager;
-import com.connorl.istaff.listeners.HackerModeListener;
 import com.gmail.xd.zwander.istaff.data.FauxPlayerInventory;
 import com.gmail.xd.zwander.istaff.data.PlayerHackerMode;
 import com.gmail.xd.zwander.istaff.data.ReportData;
@@ -52,7 +50,7 @@ public abstract class ISDataBaseManager {
     public static void addReport(Player reported, CommandSender reporter, String reason) {
         BasicDBObject object = new BasicDBObject()
                 .append("user_name", reported.getName())
-                .append("server", BungeeMessager.getServerName())
+                .append("server", IStaff.getPlugin().getBungeeMessager().getServerName())
                 .append("reported_by", reporter.getName())
                 .append("reason", reason)
                 .append("at", new Date(System.currentTimeMillis()));
@@ -139,7 +137,7 @@ public abstract class ISDataBaseManager {
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(Calendar.getInstance().getTime());
         UUID uuid = player.getUniqueId();
         long time = System.currentTimeMillis();
-        while (BungeeMessager.getServerName() == null) {
+        while (IStaff.getPlugin().getBungeeMessager().getServerName() == null) {
             try {
                 Thread.sleep(10);
             } catch (InterruptedException e) {
@@ -154,12 +152,12 @@ public abstract class ISDataBaseManager {
 
         BasicDBObject object = new BasicDBObject()
                 .append("player_id", uuid.toString())
-                .append("server", BungeeMessager.getServerName());
+                .append("server", IStaff.getPlugin().getBungeeMessager().getServerName());
         BasicDBObject object2 = new BasicDBObject()
                 .append("player_id", uuid.toString())
                 .append("inv", serialisedInventory[0])
                 .append("armor", serialisedInventory[1])
-                .append("server", BungeeMessager.getServerName())
+                .append("server", IStaff.getPlugin().getBungeeMessager().getServerName())
                 .append("at", timeStamp);
         mdb.getCollection("saved_inventories").update(object, new BasicDBObject("$set", object2), true, false);
     }
@@ -183,7 +181,7 @@ public abstract class ISDataBaseManager {
 
     public static FauxPlayerInventory loadPlayerInventory(Player player) throws TimeoutException {
         long time = System.currentTimeMillis();
-        while (BungeeMessager.getServerName() == null) {
+        while (IStaff.getPlugin().getBungeeMessager().getServerName() == null) {
             try {
                 Thread.sleep(10);
             } catch (InterruptedException e) {
@@ -200,7 +198,7 @@ public abstract class ISDataBaseManager {
         //		.append("player_id",new BasicDBObject("$eq",(p.getUniqueId().toString())))
         //		.append("server", (BungeeMessager.getServerName()));
         object.put("player_id", player.getUniqueId().toString());
-        object.put("server", BungeeMessager.getServerName());
+        object.put("server", IStaff.getPlugin().getBungeeMessager().getServerName());
 
         DBCursor iterable = mdb.getCollection("saved_inventories").find(object);
         DBObject res = iterable.hasNext() ? iterable.next() : null;
@@ -235,7 +233,7 @@ public abstract class ISDataBaseManager {
     }
 
     public static void setHackerMode(PlayerHackerMode playerHackerMode) {
-        setHackerMode(playerHackerMode.playerId, playerHackerMode.hackerMode);
+        setHackerMode(playerHackerMode.getPlayerUUID(), playerHackerMode.isHackerMode());
     }
 
     private static void setHackerMode(UUID uuid, boolean mode) {

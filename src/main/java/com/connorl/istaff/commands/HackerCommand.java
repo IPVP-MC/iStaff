@@ -83,7 +83,7 @@ public class HackerCommand implements CommandExecutor {
             @Override
             public void run() {
                 PlayerHackerMode playerHackerMode = ISDataBaseManager.getHackerMode(player);
-                boolean on = playerHackerMode != null && playerHackerMode.hackerMode;
+                boolean on = playerHackerMode != null && playerHackerMode.isHackerMode();
                 setPlayerHackerModeSync(player, !on);
                 updatePlayerHackerModeSync(player, false);
             }
@@ -213,7 +213,7 @@ public class HackerCommand implements CommandExecutor {
 
     private static void updatePlayerHackerModeSync(final Player player, boolean force) {
         PlayerHackerMode playerHackerMode = ISDataBaseManager.getHackerMode(player);
-        final boolean on = playerHackerMode != null && playerHackerMode.hackerMode;
+        final boolean on = playerHackerMode != null && playerHackerMode.isHackerMode();
         sl.add(new Callback() {
             @Override
             public void run() {

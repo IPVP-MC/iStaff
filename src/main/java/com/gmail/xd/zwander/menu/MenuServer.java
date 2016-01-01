@@ -7,12 +7,14 @@ import org.bukkit.entity.Player;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Level;
 
 public abstract class MenuServer {
 
-    private final static String DEFAULT_URL = "reports";
-    public static HashMap<String, MenuPage> urlMenupages = new HashMap<>();
+    private static final String DEFAULT_URL = "reports";
+
+    public static final Map<String, MenuPage> urlMenupages = new HashMap<>();
 
     public static void serveMenu(Player player, String url, boolean noSave) {
         if (url == null) {

@@ -9,16 +9,16 @@ public class ReportData {
     public final ObjectId reportID;
     public final Date reportedAt;
     public final String reason;
-    public final String name;
-    public final String reporter;
-    public final String server;
+    public final String reportedName;
+    public final String reporterName;
+    public final String serverName;
 
-    public ReportData(String reportedName, String reporterName, String serverName, ObjectId id, String reason, Date at) {
-        this.name = reportedName;
-        this.server = serverName;
-        this.reporter = reporterName;
-        reportID = id;
-        reportedAt = at;
+    public ReportData(String reportedName, String reporterName, String serverName, ObjectId reportID, String reason, Date reportedAt) {
+        this.reportID = reportID;
+        this.reportedAt = reportedAt;
         this.reason = reason;
+        this.reportedName = reportedName;
+        this.reporterName = reporterName;
+        this.serverName = serverName;
     }
 }
