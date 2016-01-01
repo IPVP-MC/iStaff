@@ -4,6 +4,7 @@ import com.gmail.xd.zwander.toolbox.BasicZTool;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.HumanEntity;
+import org.bukkit.event.Event;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
@@ -46,7 +47,7 @@ public class HackerZTool extends BasicZTool {
 
     @Override
     public void onPlayerInteract(PlayerInteractEvent event) {
-        event.setCancelled(true);
+        event.setUseItemInHand(Event.Result.DENY);
     }
 
     @Override

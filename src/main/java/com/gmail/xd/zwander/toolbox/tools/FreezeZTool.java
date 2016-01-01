@@ -7,6 +7,7 @@ import org.bukkit.Material;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
+import org.bukkit.event.Event;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
@@ -50,7 +51,7 @@ public class FreezeZTool extends BasicZTool {
 
     @Override
     public void onPlayerInteract(PlayerInteractEvent event) {
-        event.setCancelled(true);
+        event.setUseItemInHand(Event.Result.DENY);
     }
 
     @Override
@@ -88,7 +89,8 @@ public class FreezeZTool extends BasicZTool {
 
         Entity rightClicked = event.getRightClicked();
         if (rightClicked instanceof Player) {
-            Bukkit.dispatchCommand(player, "halt " + rightClicked.getName());
+            Player clickedPlayer = (Player) rightClicked;
+            Bukkit.dispatchCommand(player, "halt " + clickedPlayer.getName());
         }
     }
 }

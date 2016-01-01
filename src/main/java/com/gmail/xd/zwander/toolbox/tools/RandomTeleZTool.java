@@ -6,6 +6,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
+import org.bukkit.event.Event;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
@@ -53,25 +54,22 @@ public class RandomTeleZTool extends BasicZTool {
     @Override
     public void onPlayerInteract(PlayerInteractEvent event) {
         Player player = event.getPlayer();
-        if (!player.hasPermission("istaff.true")) {
+        if (player.hasPermission("istaff.true")) {
             player.sendMessage(ChatColor.RED + "You do not have permission to use that item.");
             player.getInventory().remove(getItem());
-            event.setCancelled(true);
-            return;
-        }
-
-        event.setCancelled(true);
-
-        List<Player> players = new ArrayList<>(Bukkit.getOnlinePlayers());
-        players.remove(event.getPlayer());
-
-        Player target = players.isEmpty() ? null : players.get(RANDOM.nextInt(players.size()));
-        if (target != null) {
-            player.teleport(target);
-            player.sendMessage(ChatColor.YELLOW + "You have been teleported to " + ChatColor.GOLD + target.getName() + ChatColor.YELLOW + ".");
         } else {
-            player.sendMessage(ChatColor.YELLOW + "No one to teleport to!");
+            List<Player> players = new ArrayList<>(Bukkit.getOnlinePlayers());
+            players.remove(event.getPlayer());
+            Player target = players.isEmpty() ? null : players.get(RANDOM.nextInt(players.size()));
+            if (target != null) {
+                player.teleport(target);
+                player.sendMessage(ChatColor.YELLOW + "You have been teleported to " + ChatColor.GOLD + target.getName() + ChatColor.YELLOW + ".");
+            } else {
+                player.sendMessage(ChatColor.YELLOW + "No one to teleport to!");
+            }
         }
+
+        event.setUseItemInHand(Event.Result.DENY);
     }
 
     @Override

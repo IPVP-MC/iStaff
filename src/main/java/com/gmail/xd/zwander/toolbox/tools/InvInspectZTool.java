@@ -11,6 +11,7 @@ import org.bukkit.Material;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
+import org.bukkit.event.Event;
 import org.bukkit.event.inventory.InventoryAction;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
@@ -57,7 +58,7 @@ public class InvInspectZTool extends BasicZTool {
 
     @Override
     public void onPlayerInteract(PlayerInteractEvent event) {
-        event.setCancelled(true);
+        event.setUseItemInHand(Event.Result.DENY);
     }
 
     @Override
@@ -117,7 +118,7 @@ public class InvInspectZTool extends BasicZTool {
 
                     menu.setCloseAction(new CloseAction() {
                         @Override
-                        public boolean run(HumanEntity humanEntity, Inventory inv) {
+                        public boolean run(HumanEntity humanEntity, Inventory inventory) {
                             return true;
                         }
                     });
@@ -163,7 +164,7 @@ public class InvInspectZTool extends BasicZTool {
 
                     menu.setCloseAction(new CloseAction() {
                         @Override
-                        public boolean run(HumanEntity humanEntity, Inventory invventory) {
+                        public boolean run(HumanEntity humanEntity, Inventory inventory) {
                             return true;
                         }
                     });
