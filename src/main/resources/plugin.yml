@@ -1,6 +1,6 @@
 name: iStaff
 author: Zwander.xd@gmail.com
-main: com.connorl.istaff.IStaff
+main: org.ipvp.istaff.IStaff
 version: 1.1
 softdepend: [Essentials]
 commands:
