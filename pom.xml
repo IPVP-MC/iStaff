@@ -6,8 +6,16 @@
  
     <groupId>com.gmail.xd.zwander.istaff</groupId>
     <artifactId>IStaff</artifactId>
-    <version>1.0-SNAPSHOT</version>
- 
+    <version>1.0</version>
+
+    <distributionManagement>
+        <repository>
+            <id>maven.sainttx.com</id>
+            <name>maven.sainttx.com-releases</name>
+            <url>http://maven.sainttx.com/artifactory/origin-mc-dev</url>
+        </repository>
+    </distributionManagement>
+
     <repositories>
         <repository>
             <id>spigot-repo</id>
